@@ -1,0 +1,22 @@
+{
+  "scripts": {
+    "dev": "wrangler dev src/index.tsx",
+    "watch:css": "npx tailwindcss -i ./src/tailwind.css -o ./assets/public/tailwind.css --watch",
+    "deploy": "wrangler publish --minify src/index.tsx"
+  },
+  "dependencies": {
+    "dom-parser": "^0.1.6",
+    "fast-xml-parser": "^4.2.2",
+    "hono": "^3.1.6",
+    "html-to-formatted-text": "^2.7.0",
+    "html-to-text": "^9.0.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20230419.0",
+    "@types/dom-parser": "^0.1.1",
+    "@types/xml2js": "^0.4.11",
+    "tailwindcss": "^3.3.2",
+    "wrangler": "^2.7.1",
+    "concurrently": "^8.0.1"
+  }
+}
