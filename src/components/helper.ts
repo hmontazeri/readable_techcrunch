@@ -2,18 +2,7 @@ import { XMLParser } from "fast-xml-parser";
 import DomParser from "dom-parser";
 // @ts-ignore
 import { htmlToText } from "html-to-text";
-
-export type Article = {
-  title: string;
-  link: string;
-  pubDate: string;
-  creator: string;
-  description: string;
-  guid: string;
-  guidUrl?: string;
-  image?: string;
-  content?: string;
-};
+import { Article } from "./types";
 
 function parseXmlToJson(xml: string): any {
   const parser = new XMLParser();

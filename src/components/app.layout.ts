@@ -20,6 +20,3 @@ export const Layout = (props: SiteData) => html`
     </body>
   </html>
 `;
-
-// <link href="https://cdn.tailwindcss.com" rel="preload" as="script" />
-// <script src="https://cdn.tailwindcss.com"></script>
