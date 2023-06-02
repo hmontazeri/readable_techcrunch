@@ -1,10 +1,11 @@
 {
   "scripts": {
-    "dev": "wrangler dev src/index.tsx",
+    "dev": "concurrently \"npm run watch:css\" \"wrangler dev src/index.tsx\"",
     "watch:css": "npx tailwindcss -i ./src/tailwind.css -o ./assets/public/tailwind.css --watch",
     "deploy": "wrangler publish --minify src/index.tsx"
   },
   "dependencies": {
+    "@upstash/redis": "^1.21.0",
     "dom-parser": "^0.1.6",
     "fast-xml-parser": "^4.2.2",
     "hono": "^3.1.6",
@@ -15,8 +16,8 @@
     "@cloudflare/workers-types": "^4.20230419.0",
     "@types/dom-parser": "^0.1.1",
     "@types/xml2js": "^0.4.11",
+    "concurrently": "^8.0.1",
     "tailwindcss": "^3.3.2",
-    "wrangler": "^2.7.1",
-    "concurrently": "^8.0.1"
+    "wrangler": "^2.7.1"
   }
 }

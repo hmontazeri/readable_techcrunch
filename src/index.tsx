@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/cloudflare-workers";
-import { env } from "hono/adapter";
 
 import {
   loadAndParseTechCrunchFeedToArticle,

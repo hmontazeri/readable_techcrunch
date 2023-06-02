@@ -4,6 +4,8 @@ import DomParser from "dom-parser";
 import { htmlToText } from "html-to-text";
 import { Article } from "./types";
 import { Context } from "hono";
+import { env } from "hono/adapter";
+import { Redis } from "@upstash/redis/cloudflare";
 
 function parseXmlToJson(xml: string): any {
   const parser = new XMLParser();
@@ -17,13 +19,28 @@ export async function loadAndParseTechCrunchFeedToArticle(c: Context) {
   const feedJSON = parseXmlToJson(feedText);
   const articles = await Promise.all(
     feedJSON.rss.channel.item.map(async (item: any) => {
+      // check if article exists in db
+      const { REDIS_URL } = env<{ REDIS_URL: string }>(c);
+      const { REDIS_TOKEN } = env<{ REDIS_TOKEN: string }>(c);
+      const redis = new Redis({
+        url: REDIS_URL,
+        token: REDIS_TOKEN,
+      });
+      let article = (await redis.get(item.guid.split("?p=").pop())) as
+        | Article
+        | undefined;
+      if (article) {
+        return article;
+      }
+      // get article html
+
       const articleHtml = await LoadRequestRawHtml(item.link);
       const domParser = new DomParser();
       const articleDom = domParser.parseFromString(articleHtml);
       const articleFeatureImage = articleDom
         .getElementsByClassName("article__featured-image")?.[0]
         ?.getAttribute("src");
-      const article: Article = {
+      article = {
         title: htmlToText(item.title),
         link: item.link,
         pubDate: item.pubDate,
@@ -32,6 +49,8 @@ export async function loadAndParseTechCrunchFeedToArticle(c: Context) {
         guid: item.guid.split("?p=").pop(),
         image: articleFeatureImage || "",
       };
+
+      await redis.set(article.guid, JSON.stringify(article));
       return article;
     })
   );
@@ -50,8 +69,18 @@ export async function loadHtmlFromGuidAndGetContentHtml(
   c: Context,
   guid: string
 ) {
-  const articles = await loadAndParseTechCrunchFeedToArticle(c);
-  const article = articles.find((article: Article) => article.guid === guid);
+  const { REDIS_URL } = env<{ REDIS_URL: string }>(c);
+  const { REDIS_TOKEN } = env<{ REDIS_TOKEN: string }>(c);
+  const redis = new Redis({
+    url: REDIS_URL,
+    token: REDIS_TOKEN,
+  });
+  const article = (await redis.get(guid)) as Article | undefined;
+
+  if (!article) {
+    return "";
+  }
+
   const articleHtml = await LoadRequestRawHtml(article.link);
   const domParser = new DomParser();
   const articleDom = domParser.parseFromString(articleHtml);
