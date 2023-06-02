@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/cloudflare-workers";
+import { env } from "hono/adapter";
 
 import {
-  loadAndParseTechcrunchFeedToArticle,
+  loadAndParseTechCrunchFeedToArticle,
   loadHtmlFromGuidAndGetContentHtml,
 } from "./components/helper";
 import { HomePage } from "./components/home.layout";
@@ -15,7 +16,7 @@ app.get("/public/*", serveStatic({ root: "./" }));
 
 // index route
 app.get("/", async (c) => {
-  const articles = await loadAndParseTechcrunchFeedToArticle();
+  const articles = await loadAndParseTechCrunchFeedToArticle(c);
   const props = {
     siteData: {
       title: "A readable TechCrunch feed",
@@ -29,7 +30,10 @@ app.get("/", async (c) => {
 
 // article route
 app.get("/article/:guid", async (c) => {
-  const article = await loadHtmlFromGuidAndGetContentHtml(c.req.param("guid"));
+  const article = await loadHtmlFromGuidAndGetContentHtml(
+    c,
+    c.req.param("guid")
+  );
 
   const props = {
     siteData: {

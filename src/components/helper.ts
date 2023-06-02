@@ -3,6 +3,7 @@ import DomParser from "dom-parser";
 // @ts-ignore
 import { htmlToText } from "html-to-text";
 import { Article } from "./types";
+import { Context } from "hono";
 
 function parseXmlToJson(xml: string): any {
   const parser = new XMLParser();
@@ -10,21 +11,30 @@ function parseXmlToJson(xml: string): any {
   return feedJSON;
 }
 
-export async function loadAndParseTechcrunchFeedToArticle() {
+export async function loadAndParseTechCrunchFeedToArticle(c: Context) {
   const feedXML = await fetch("https://techcrunch.com/feed/");
   const feedText = await feedXML.text();
   const feedJSON = parseXmlToJson(feedText);
-  const articles = feedJSON.rss.channel.item.map((item: any) => {
-    const article: Article = {
-      title: htmlToText(item.title),
-      link: item.link,
-      pubDate: item.pubDate,
-      creator: item["dc:creator"],
-      description: htmlToText(item.description.replace(/<[^>]*>?/gm, "")),
-      guid: item.guid.split("?p=").pop(),
-    };
-    return article;
-  });
+  const articles = await Promise.all(
+    feedJSON.rss.channel.item.map(async (item: any) => {
+      const articleHtml = await LoadRequestRawHtml(item.link);
+      const domParser = new DomParser();
+      const articleDom = domParser.parseFromString(articleHtml);
+      const articleFeatureImage = articleDom
+        .getElementsByClassName("article__featured-image")?.[0]
+        ?.getAttribute("src");
+      const article: Article = {
+        title: htmlToText(item.title),
+        link: item.link,
+        pubDate: item.pubDate,
+        creator: item["dc:creator"],
+        description: htmlToText(item.description.replace(/<[^>]*>?/gm, "")),
+        guid: item.guid.split("?p=").pop(),
+        image: articleFeatureImage || "",
+      };
+      return article;
+    })
+  );
 
   return articles;
 }
@@ -36,8 +46,11 @@ export async function LoadRequestRawHtml(url: string) {
   return text;
 }
 
-export async function loadHtmlFromGuidAndGetContentHtml(guid: string) {
-  const articles = await loadAndParseTechcrunchFeedToArticle();
+export async function loadHtmlFromGuidAndGetContentHtml(
+  c: Context,
+  guid: string
+) {
+  const articles = await loadAndParseTechCrunchFeedToArticle(c);
   const article = articles.find((article: Article) => article.guid === guid);
   const articleHtml = await LoadRequestRawHtml(article.link);
   const domParser = new DomParser();
